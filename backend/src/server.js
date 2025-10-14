@@ -20,6 +20,15 @@ app.get('/',(req,res)=>{
     res.send('Hello from server')
 })
 
+// Handle favicon requests to prevent 404 errors
+app.get('/favicon.ico', (req, res) => {
+    res.status(204).end()
+})
+
+app.get('/favicon.png', (req, res) => {
+    res.status(204).end()
+})
+
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
@@ -34,18 +43,27 @@ app.use((err,req,res,next)=>{
 const startServer = async()=>{
     try{
         await connectDB()
-        // listen for local development
-        if(ENV.NODE_ENV==='production'){
-            app.listen(ENV.PORT,()=>console.log(`Server is running on port ${ENV.PORT}`))
+        // Only listen for local development
+        if(ENV.NODE_ENV !== 'production'){
+            const PORT = ENV.PORT || 5001;
+            app.listen(PORT,()=>console.log(`Server is running on port ${PORT}`))
         }
     }
     catch(err){
         console.log("Failed to start server: ",err)
-        process.exit(1)
+        if(ENV.NODE_ENV !== 'production'){
+            process.exit(1)
+        }
     }
 }
 
-startServer()
+// Initialize database connection
+if(ENV.NODE_ENV !== 'production'){
+    startServer()
+} else {
+    // For Vercel, connect to DB on first request
+    connectDB().catch(err => console.error("Database connection failed:", err))
+}
 
 // export for vercel deployment
 export default app;
