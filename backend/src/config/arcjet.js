@@ -1,22 +1,21 @@
-import arcjet,{tokenBucket,shield,detectBot} from 'arcjet';
-import { ENV } from './env.js';
+// multer is a middleware for handling multipart/form-data, which is primarily used for file uploads
 
+import multer from "multer";
 
-//initialize arcjet with security rules
-export const aj = arcjet({
-    key: ENV.ARCJET_KEY,
-    characteristics:["ip.src"],
-    rules:[
-        // shield protects from common attacks like sql injection, xss, csrf etc
-        shield({mode:"LIVE"}),
-        // bot-detection block all bots except search engine bots
-        detectBot({mode:"LIVE",allow:["CATEGORY:SEARCH_ENGINE"]}),
-        // rate limiting using token bucket algorithm
-        tokenBucket({
-            mode:"LIVE",
-            refillRate:10, //tokens added per interval
-            interval: 10, //interval in seconds (10 seconds)
-            capacity: 15, //maximum tokens in bucket
-        }),
-    ],
-})
+const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+export default upload;
