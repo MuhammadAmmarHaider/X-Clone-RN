@@ -1,56 +1,52 @@
-import express from 'express'
-import {ENV} from './config/env.js'
-import {connectDB} from './config/db.js'
-import cors from 'cors'
-import {clerkMiddleware} from '@clerk/express'
-import userRoutes from './routes/user.route.js'
-import postRoutes from './routes/post.route.js'
-import commentRoutes from './routes/comment.route.js'
-import notificationRoutes from './routes/notification.route.js'
-import { arcjetMiddleware } from './middleware/arcjet.middleware.js'
+import express from "express";
+import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
 
-const app = express()
+import userRoutes from "./routes/user.route.js";
+import postRoutes from "./routes/post.route.js";
+import commentRoutes from "./routes/comment.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 
-app.use(cors())
-app.use(express.json())
-app.use(clerkMiddleware())
-app.use(arcjetMiddleware) // apply arcjet middleware globally
+import { ENV } from "./config/env.js";
+import { connectDB } from "./config/db.js";
+import { arcjetMiddleware } from "./middleware/arcjet.middleware.js";
 
-app.get('/',(req,res)=>{
-    res.send('Hello from server')
-})
+const app = express();
 
-// Handle favicon requests to prevent 404 errors
-app.get('/favicon.ico', (req, res) => {
-    res.status(204).end()
-})
+app.use(cors());
+app.use(express.json());
 
-app.get('/favicon.png', (req, res) => {
-    res.status(204).end()
-})
+app.use(clerkMiddleware());
+app.use(arcjetMiddleware);
 
-app.use('/api/users', userRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/notifications',notificationRoutes)
+app.get("/", (req, res) => res.send("Hello from server"));
+
+app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // error handling middleware
-app.use((err,req,res,next)=>{
-    console.log("unhandled error: ",err)
-    res.status(500).json({error: err.message || 'Internal Server Error'})
-})
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: err.message || "Internal server error" });
+});
 
-const startServer = async()=>{
-    try{
-        await connectDB()
-        app.listen(ENV.PORT,()=>console.log(`Server is running on port ${ENV.PORT}`))
-    }
-    catch(err){
-        console.log("Failed to start server: ",err)
-        if(ENV.NODE_ENV !== 'production'){
-            process.exit(1)
-        }
-    }
-}
+const startServer = async () => {
+  try {
+    await connectDB();
 
-startServer()
+    // listen for local development
+    if (ENV.NODE_ENV !== "production") {
+      app.listen(ENV.PORT, () => console.log("Server is up and running on PORT:", ENV.PORT));
+    }
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// export for vercel
+export default app;
