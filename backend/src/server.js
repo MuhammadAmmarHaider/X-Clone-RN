@@ -43,11 +43,7 @@ app.use((err,req,res,next)=>{
 const startServer = async()=>{
     try{
         await connectDB()
-        // Only listen for local development
-        if(ENV.NODE_ENV !== 'production'){
-            const PORT = ENV.PORT || 5001;
-            app.listen(PORT,()=>console.log(`Server is running on port ${PORT}`))
-        }
+        app.listen(ENV.PORT,()=>console.log(`Server is running on port ${ENV.PORT}`))
     }
     catch(err){
         console.log("Failed to start server: ",err)
@@ -57,13 +53,4 @@ const startServer = async()=>{
     }
 }
 
-// Initialize database connection
-if(ENV.NODE_ENV !== 'production'){
-    startServer()
-} else {
-    // For Vercel, connect to DB on first request
-    connectDB().catch(err => console.error("Database connection failed:", err))
-}
-
-// export for vercel deployment
-export default app;
+startServer()
